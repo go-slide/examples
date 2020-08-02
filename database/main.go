@@ -22,7 +22,16 @@ type Input struct {
 type User struct {
 	Email string         `json:"email" db:"email"`
 	Input types.JSONText `json:"input" db:"input"`
-	Tags  pq.Int64Array `json:"tags" db:"tags"`
+	Tags  pq.Int64Array  `json:"tags" db:"tags"`
+}
+
+func (user *User) AddInput(input Input) error {
+	data, err := json.Marshal(input)
+	if err != nil {
+		return err
+	}
+	user.Input = data
+	return nil
 }
 
 func main() {
@@ -48,8 +57,9 @@ func main() {
 			Age:      1,
 			Password: "somePassword",
 		}
-		inputJson, _ := json.Marshal(&input)
-		user.Input = inputJson
+		if err := user.AddInput(input); err != nil {
+			return ctx.Send(http.StatusInternalServerError, err.Error())
+		}
 		_, err := db.NamedExec("INSERT INTO json_table (email, input) VALUES (:email, :input)", user)
 		if err != nil {
 			return ctx.Send(http.StatusInternalServerError, err.Error())
