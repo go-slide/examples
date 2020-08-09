@@ -67,23 +67,25 @@ func main() {
 		return ctx.SendStatusCode(http.StatusOK)
 	})
 	app.Get("/filter/:age", func(ctx *slide.Ctx) error {
-		users := new([]User)
-		if err := db.Select(users, "SELECT email, input from json_table"); err != nil {
+		users := []User{}
+		if err := db.Select(&users, "SELECT email, input from json_table"); err != nil {
 			return ctx.Send(http.StatusInternalServerError, err.Error())
 		}
 		age, _ := strconv.Atoi(ctx.GetParam("age"))
-		filteredUsers := new([]string)
-		for _, v := range *users {
+		filteredUsers := []string{}
+		for _, v := range users {
 			input := new(Input)
 			err := json.Unmarshal(v.Input, input)
 			if err != nil {
 				return ctx.Send(http.StatusInternalServerError, err.Error())
 			}
 			if input.Age == age {
-				*filteredUsers = append(*filteredUsers, input.Username)
+				filteredUsers = append(filteredUsers, input.Username)
 			}
 		}
-		return ctx.JSON(http.StatusOK, filteredUsers)
+		return ctx.JSON(http.StatusOK, map[string][]string{
+			"payload": filteredUsers,
+		})
 	})
 	app.Get("/filter/tags/:number", func(ctx *slide.Ctx) error {
 		users := new([]User)
