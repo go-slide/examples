@@ -41,8 +41,8 @@ func main() {
 	}
 	app := slide.InitServer(&slide.Config{})
 	app.Get("/users", func(ctx *slide.Ctx) error {
-		users := new([]User)
-		if err := db.Select(users, "SELECT email, input, tags from json_table"); err != nil {
+		users := []User{}
+		if err := db.Select(&users, "SELECT email, input, tags from json_table"); err != nil {
 			return ctx.Send(http.StatusInternalServerError, err.Error())
 		}
 		return ctx.JSON(http.StatusOK, map[string]interface{}{
